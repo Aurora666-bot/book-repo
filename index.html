@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Catalog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .book-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .book {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            background: #fff;
+        }
+        .book h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .book p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .book-id {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="book-container">
+        <h1>📚 Book Catalog</h1>
+        <div id="book-list">
+            <div class="loading">Loading books...</div>
+        </div>
+    </div>
+
+    <script>
+        fetch('books.xml')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.text();
+            })
+            .then(xmlText => {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                const parseError = xmlDoc.getElementsByTagName('parsererror')[0];
+                if (parseError) {
+                    throw new Error('XML parsing error: ' + parseError.textContent);
+                }
+                
+                const books = xmlDoc.getElementsByTagName('book');
+                const bookList = document.getElementById('book-list');
+                bookList.innerHTML = '';
+                
+                for (let book of books) {
+                    const id = book.getAttribute('id');
+                    const title = book.getElementsByTagName('title')[0].textContent;
+                    const author = book.getElementsByTagName('authur')[0].textContent; // 注意：你XML中使用的是authur
+                    const price = book.getElementsByTagName('price')[0].textContent;
+                    
+                    const bookDiv = document.createElement('div');
+                    bookDiv.className = 'book';
+                    bookDiv.innerHTML = `
+                        <h3>${title}</h3>
+                        <p><strong>Author:</strong> ${author}</p>
+                        <p><strong>Price:</strong> ${price}</p>
+                        <p class="book-id"><strong>ID:</strong> ${id}</p>
+                    `;
+                    bookList.appendChild(bookDiv);
+                }
+                
+                // 如果没有找到书籍
+                if (books.length === 0) {
+                    bookList.innerHTML = '<div class="error">No books found in the catalog.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('book-list').innerHTML = 
+                    `<div class="error">Error loading books: ${error.message}</div>`;
+            });
+    </script>
+</body>
+</html>
